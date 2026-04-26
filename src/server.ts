@@ -50,8 +50,8 @@ type SearchVulnerabilitiesArgs = {
   vendorName?: string;
    severity?: Severity;
   status?: "open" | "patched";
-  publishedAfter?: string;   // YYYY-MM-DD
-  publishedBefore?: string;  // YYYY-MM-DD
+  publishedAfter?: string; 
+  publishedBefore?: string;
 
   limit?: number;
   sortBy?: "severity" | "date";
@@ -66,19 +66,11 @@ type GetVulnerabilityByCveArgs = {
 ========================= */
 
 if (!db["vendors"] || !db["vulnerabilities"]) {
-   /* return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({ error: "DB failed to load" }, null, 2),
-        },
-      ],
-    };*/
+
   throw new Error("DB failed to load");
 }
 
-/*const vendors = db["vendors"] as any[];
-const vulnerabilities = db["vulnerabilities"] as any[];*/
+
 const vendors = db["vendors"] as Vendor[];
 const vulnerabilities = db["vulnerabilities"] as Vulnerability[];
 
@@ -138,10 +130,6 @@ function getVendorRiskScore() {
   for (const v of vulnerabilities) {
     if (v.status !== "open") continue;
 
-    /*let score = 1;
-    if (v.severity === "critical") score = 5;
-    else if (v.severity === "high") score = 3;
-    else if (v.severity === "medium") score = 2;*/
     const score = severityScore[v.severity] ?? 1;
 
     const id = v.vendor_id;
@@ -162,31 +150,26 @@ function getVendorRiskScore() {
 function searchVulnerabilities(args: SearchVulnerabilitiesArgs) {
   let results = vulnerabilities;
 
-  // CVE filter
   if (args.cveId) {
     results = results.filter(v =>
       v.cveId.toLowerCase().includes(args.cveId!.toLowerCase())
     );
   }
 
-  // title filter
   if (args.title) {
     results = results.filter(v =>
       v.title.toLowerCase().includes(args.title!.toLowerCase())
     );
   }
 
-  // severity filter
   if (args.severity) {
     results = results.filter(v => v.severity === args.severity);
   }
 
-  // status filter
   if (args.status) {
     results = results.filter(v => v.status === args.status);
   }
 
-  // vendor filter
   if (args.vendorName) {
     const vendor = vendors.find(v =>
       v.name.toLowerCase() === args.vendorName!.toLowerCase()
@@ -197,18 +180,6 @@ function searchVulnerabilities(args: SearchVulnerabilitiesArgs) {
     results = results.filter(v => v.vendor_id === vendor.id);
   }
 
-  // date filters
-  /*if (args.publishedAfter) {
-    results = results.filter(v =>
-      v.published && v.published >= args.publishedAfter!
-    );
-  }
-
-  if (args.publishedBefore) {
-    results = results.filter(v =>
-      v.published && v.published <= args.publishedBefore!
-    );
-  }*/
  if (args.publishedAfter) {
     const after = new Date(args.publishedAfter);
 
@@ -301,7 +272,6 @@ function getVendorSeverityMatrix() {
       };
     }
 
-    //const sev = v.severity as keyof typeof map[string];
     const sev = v.severity as Severity;
 
     if (map[vendorId][sev] !== undefined) {
@@ -339,7 +309,7 @@ const server = new Server(
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
-    {//ללא אני
+    {
       name: "count_open_vulnerabilities",
       description: "Count open vulnerabilities",
       inputSchema: { type: "object", properties: {} },
@@ -366,12 +336,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         required: ["name"],
       },
     },
-    {//ללא אני
+    {
       name: "get_most_dangerous_vendors",
       description: "Rank vendors by open vulnerabilities",
       inputSchema: { type: "object", properties: {} },
     },
-    {// ללא אני
+    {
       name: "get_vendor_risk_score",
       description: "Calculate vendor risk score",
       inputSchema: { type: "object", properties: {} },
@@ -392,15 +362,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       description: "Search vulnerabilities with multiple filters",
       inputSchema: {
         type: "object",
-        /*properties: {
-          cveId: { type: "string" },
-          title: { type: "string" },
-          vendorName: { type: "string" },
-          severity: { type: "string" },
-          status: { type: "string" },
-          publishedAfter: { type: "string" },
-          publishedBefore: { type: "string" },
-        },*/
         properties: {
           cveId: { type: "string" },
           title: { type: "string" },
@@ -639,11 +600,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       content: [
         {
           type: "text",
-          //text: JSON.stringify(result, null, 2),
           text: JSON.stringify(
             {
-              /*found: result ? true : false,
-              data: result*/
               cveId: args.cveId,
               result
             },

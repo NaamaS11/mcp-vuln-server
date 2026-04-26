@@ -20,6 +20,15 @@ function ask(question: string): Promise<string> {
 function selectToolByKeywords(input: string): ToolDecision {
   const lower = input.toLowerCase();
 
+  if (lower.includes("cve")) {
+    const match = input.match(/CVE-\d{4}-\d+/i);
+
+    return {
+      tool: "get_vulnerability_by_cve",
+      args: { cveId: match ? match[0] : "" }
+    };
+  }
+
   if (lower.includes("severity")) {
     return { tool: "get_severity_stats", args: {} };
   }
@@ -48,9 +57,6 @@ function selectToolByKeywords(input: string): ToolDecision {
 }
 
 async function main() {
-  console.log("Vulnerability Agent Demo");
-  console.log("This demo uses keyword-based tool selection.");
-  console.log("Type a question or 'exit' to quit.\n");
 
   while (true) {
     const input = await ask("You: ");

@@ -12,10 +12,10 @@ async function test() {
       model: "llama-3.1-8b-instant",
     });
 
-    console.log("✅ SUCCESS:");
+    console.log("SUCCESS:");
     console.log(res.choices[0]?.message?.content);
   } catch (err) {
-    console.error("❌ ERROR:");
+    console.error("ERROR:");
 
     if (err instanceof Error) {
       console.error(err.message);

@@ -2,204 +2,170 @@
 
 ## Overview
 
-This project implements a Model Context Protocol (MCP) server in TypeScript for querying a legacy vulnerability database stored in custom pipe-delimited text files.
+This project implements a Model Context Protocol (MCP) server in TypeScript that provides structured access to a legacy vulnerability database stored in custom pipe-delimited text files.
 
-The system exposes structured tools that allow an AI agent (or any MCP-compatible client) to explore, filter, and analyze security vulnerabilities efficiently.
+The system enables querying, filtering, and analyzing security vulnerabilities through well-defined tools that can be used by any MCP-compatible client, including LLM-based agents.
 
-On top of the MCP server, an agent layer was added to enable natural-language queries using an LLM (Groq), along with both CLI and a simple web interface.
+An additional agent layer enables natural language interaction via a CLI interface and a simple web interface.
 
 ---
 
 ## Project Structure
 
-* `src/index.ts` – Loads and parses the data files
-* `src/server.ts` – MCP server implementation and tool handling
-* `tools.ts` – Tool definitions exposed to the agent
-* `mcp-client.ts` – Communication layer with the MCP server
-* `groq.ts` – LLM integration (tool selection + summarization)
-* `agent.ts` – CLI-based agent interface
-* `agent-demo.ts` – Keyword-based demo mode (no LLM)
-* `web.ts` – Simple browser-based interface
-* `vendors.db`, `vulnerabilities.db` – Data sources
+src/index.ts – Data loading and parsing  
+src/server.ts – MCP server implementation and tool exposure  
+tools.ts – Tool definitions  
+mcp-client.ts – Communication layer between agent and MCP server  
+groq.ts – LLM integration  
+agent.ts – CLI-based agent interface  
+agent-demo.ts – Demo mode without LLM  
+web.ts – HTTP server for the web interface  
+index.html – Web UI (separated from server logic)  
+vendors.db – Vendor data source  
+vulnerabilities.db – Vulnerability data source  
 
 ---
 
 ## Data Handling
 
-The system loads two files at startup:
+The system loads two data files at startup:
 
-* `vendors.db`
-* `vulnerabilities.db`
+- vendors.db  
+- vulnerabilities.db  
 
-The format includes a metadata section describing column structure.
-This metadata is parsed dynamically, allowing flexibility if the schema changes in the future.
+Each file includes a metadata section describing its structure (column names and order).
 
-All data is stored in memory after loading to ensure fast query performance.
+This metadata is parsed dynamically, allowing the system to adapt to schema changes without requiring code changes.
+
+After parsing, all data is stored in memory to ensure fast query performance.
+
+---
+
+## Data Processing Approach
+
+- Files are parsed generically using metadata instead of hardcoded field positions  
+- Each row is transformed into a structured object dynamically  
+- Relationships between datasets (e.g., vendor_id → vendor) are resolved at query time  
+- Data is normalized during parsing (trimming whitespace, consistent field naming)  
 
 ---
 
 ## Available Tools
 
-The MCP server exposes the following tools:
+count_open_vulnerabilities  
+Returns the total number of vulnerabilities with status open  
 
-### 1. `count_open_vulnerabilities`
+get_most_dangerous_vendors  
+Ranks vendors by number of open vulnerabilities  
 
-Returns the total number of vulnerabilities with status `open`.
+get_vendor_risk_score  
+Calculates a risk score per vendor based on severity levels  
 
----
+get_vulnerabilities_by_status  
+Filters vulnerabilities by status (open / patched)  
 
-### 2. `get_most_dangerous_vendors`
+get_vulnerability_by_cve  
+Retrieves a vulnerability by its CVE ID  
 
-Ranks vendors by number of open vulnerabilities.
+get_severity_stats  
+Aggregates vulnerabilities by severity (low, medium, high, critical)  
 
----
+get_vendor_severity_matrix  
+Provides severity distribution per vendor  
 
-### 3. `get_vendor_risk_score`
-
-Calculates a risk score per vendor based on severity levels of vulnerabilities.
-
----
-
-### 4. `get_vulnerabilities_by_status`
-
-Filters vulnerabilities by status (`open` or `patched`).
-
----
-
-### 5. `get_vulnerability_by_cve`
-
-Returns a specific vulnerability using its CVE ID.
-
----
-
-### 6. `get_severity_stats`
-
-Aggregates vulnerabilities by severity (low, medium, high, critical).
+search_vulnerabilities  
+Supports filtering by:
+- CVE ID  
+- Title keyword  
+- Vendor name  
+- Severity  
+- Status  
 
 ---
 
-### 7. `get_vendor_severity_matrix`
+## Installation
 
-Provides a breakdown of severity distribution per vendor.
+npm install
 
 ---
 
-### 8. `search_vulnerabilities`
+## Build
 
-Supports flexible filtering by:
-
-* CVE ID
-* Title keyword
-* Vendor name
-* Severity
-* Status
+npm run build
 
 ---
 
 ## Running the Project
 
-### Install dependencies
+CLI Agent:  
+npm run agent  
 
-```bash
-npm install
-```
+Example queries:
 
-### Build
-
-```bash
-npm run build
-```
+How many open vulnerabilities?  
+Show severity statistics  
+Most dangerous vendors  
+Find vulnerabilities related to Linux  
 
 ---
 
-## Running Options
+Demo Mode:  
+npm run demo  
 
-### 1. CLI Agent (with Groq)
-
-```bash
-npm run agent
-```
-
-Then type natural language queries such as:
-
-* "How many open vulnerabilities?"
-* "Show severity statistics"
-* "Most dangerous vendors"
+Uses keyword-based tool selection without an LLM.
 
 ---
 
-### 2. Demo Mode (no AI)
+Web Interface:  
+npm run web  
 
-```bash
-npm run demo
-```
-
-Uses keyword-based tool selection instead of an LLM.
+Open in browser:  
+http://localhost:3000  
 
 ---
 
-### 3. Web Interface (Browser)
+## MCP Server
 
-```bash
-npm run web
-```
+The MCP server exposes structured tools that allow external clients, including LLM-based agents, to query the vulnerability database.
 
-Then open:
-
-```
-http://localhost:3000
-```
-
-This provides a simple UI for asking questions and viewing results in a more user-friendly way compared to the terminal.
+The server communicates over stdio transport and follows the MCP protocol for tool discovery and execution.
 
 ---
 
 ## Design Decisions
 
-* **Strong typing instead of `any`**
-  The implementation initially used `any` for flexibility during early development, but was later refactored to use explicit types for better safety and maintainability.
+Strong typing  
+Explicit TypeScript types improve safety and maintainability  
 
-* **Dynamic metadata parsing**
-  The system does not assume a fixed schema and instead reads column definitions from the metadata block in each file.
+Dynamic metadata parsing  
+Schema is derived from metadata instead of being hardcoded  
 
-* **In-memory data storage**
-  Data is loaded once at startup to optimize query performance.
+In-memory storage  
+Data is loaded once at startup for fast queries  
 
-* **Switch from Gemini to Groq**
-  The initial implementation used Google Gemini, but due to connection and environment-related issues, the integration was replaced with Groq for more stable and responsive tool usage.
-
-* **Separation of concerns**
-  The MCP server, agent logic, and UI are clearly separated, allowing easy replacement or extension of each layer.
+Separation of concerns  
+Clear separation between data, logic, server, and interface layers  
 
 ---
 
-## What I Would Improve With More Time
+## Future Improvements
 
-* **Multi-step tool orchestration**
-  Currently, each query maps to a single tool.
-  A more advanced agent would support combining multiple tool calls to answer complex questions.
-
-* **More advanced analytical tools**
-  For example:
-
-  * Trend analysis of vulnerabilities over time
-  * Detection of vendors with increasing risk patterns
-
-* **Generic LLM integration layer**
-  Instead of being tied to a specific provider (Groq), the system could support multiple LLM backends through a unified interface.
+Support multi-step tool orchestration  
+Add advanced analytics (trend analysis, anomaly detection)  
+Introduce abstraction for multiple LLM providers  
+Improve search capabilities (fuzzy matching, ranking)  
+Enhance UI with better visualization  
 
 ---
 
 ## Summary
 
-This project transforms a legacy text-based vulnerability database into a structured, queryable system that can be accessed through natural language using an AI agent.
+This project transforms a legacy text-based vulnerability database into a structured, queryable system accessible through both programmatic tools and natural language queries.
 
 It demonstrates:
 
-* MCP server design
-* Data parsing and modeling
-* Tool-based reasoning
-* LLM integration
-* Basic UI layer
-
----
+MCP server design  
+Dynamic data parsing  
+Tool-based querying  
+LLM integration  
+Layered architecture  

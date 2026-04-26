@@ -14,8 +14,6 @@ function ask(question: string) {
 }
 
 async function main() {
-  console.log("Vulnerability Agent Started");
-  console.log("Type your questions or 'exit' to quit\n");
 
   while (true) {
     const input = await ask("You: ");
@@ -55,7 +53,6 @@ async function main() {
         continue;
       }
 
-      console.log("Formatting answer...");
 
       const final = await askGroq(
         `You are a cybersecurity analyst.
