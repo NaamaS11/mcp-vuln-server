@@ -8,6 +8,7 @@
     "build": "tsc",
     "agent": "node agent.js",
     "demo": "node agent-demo.js",
+    "web": "node web.js",
     "test:groq": "node test-groq.js"
   },
   "keywords": [],
